@@ -3,10 +3,12 @@ package main
 import (
 	"log"
 	"flag"
+	"os"
 	"net/http"
 	"text/template"
 	"path/filepath"
 	"sync"
+	"github.com/uchiiii/trace"
 )
 
 type templateHandler struct{
@@ -28,6 +30,8 @@ func main(){
 	flag.Parse()
 
 	r := newRoom()
+	r.tracer = trace.New(os.Stdout)
+
 	http.Handle("/", &templateHandler{filename: "chat.html"})
 	http.Handle("/room", r)
 
