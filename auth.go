@@ -13,8 +13,8 @@ type authHandler struct {
 }
 
 func (h *authHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	_, err := r.Cookie("auth")
-	if err == http.ErrNoCookie {
+	cookie, err := r.Cookie("auth")
+	if err == http.ErrNoCookie ||  cookie.Value == "" {
 		w.Header().Set("Location", "/login")
 		w.WriteHeader(http.StatusTemporaryRedirect)
 		return
@@ -64,11 +64,12 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		authCookieValue := objx.New(map[string]interface{}{
 			"name": user.Name(),
+			"avatar_url": user.AvatarURL(),
 		}).MustBase64()
 		http.SetCookie(w, &http.Cookie{
 			Name:  "auth",
 			Value: authCookieValue,
-			Path:  "/",
+			Path:  "/",  //designate the domain which can use the cookie
 		})
 		w.Header().Set("Location", "/chat")
 		w.WriteHeader(http.StatusTemporaryRedirect)
