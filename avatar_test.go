@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"path/filepath"
 	"testing"
 )
 
@@ -22,7 +21,7 @@ func TestAuthAvatar(t *testing.T) {
 	testUser = &gomniauthtest.TestUser{}
 	testChatUser.User = testUser
 	testUser.On("AvatarURL").Return(testUrl, nil)
-	url, err := authAvatar.GetAvatarURL(testChatUser)
+	url, err = authAvatar.GetAvatarURL(testChatUser)
 	if err != nil {
 		t.Error("AuthAvatar.GetAvatarURL should return no error when value present")
 	}
@@ -40,7 +39,8 @@ func TestGravatarAvatar(t *testing.T) {
 	}
 	if url != "//www.gravatar.com/avatar/abc" {
 		t.Errorf("GravatarAvatar.GetAvatarURL wrongly returned %s", url)
-} }
+	}
+}
 
 func TestFileSystemAvatar(t *testing.T) {
 	// make a test avatar file

@@ -18,6 +18,12 @@ import (
 	"github.com/stretchr/objx"
 )
 
+var avatars Avatar = TryAvatar{
+	UseFileSystemAvatar,
+	UseAuthAvatar,
+	UseGravatar,
+}
+
 type templateHandler struct {
 	once     sync.Once
 	filename string
@@ -54,7 +60,7 @@ func main() {
 		github.New(config.Auth.Each["github"].Id, config.Auth.Each["github"].Secret, config.Auth.Each["github"].RedirectURL),
 	)
 
-	r := newRoom(UserFileSystemAvatar) //did not have to create an instance of AuthAvatar, so no memory was allocated.
+	r := newRoom() //did not have to create an instance of AuthAvatar, so no memory was allocated.
 	r.tracer = trace.New(os.Stdout)
 
 	http.Handle("/chat", MustAuth(&templateHandler{filename: "chat.html"}))
