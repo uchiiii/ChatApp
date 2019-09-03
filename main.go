@@ -54,7 +54,7 @@ func main() {
 		github.New(config.Auth.Each["github"].Id, config.Auth.Each["github"].Secret, config.Auth.Each["github"].RedirectURL),
 	)
 
-	r := newRoom(UseGravatar) //did not have to create an instance of AuthAvatar, so no memory was allocated.
+	r := newRoom(UserFileSystemAvatar) //did not have to create an instance of AuthAvatar, so no memory was allocated.
 	r.tracer = trace.New(os.Stdout)
 
 	http.Handle("/chat", MustAuth(&templateHandler{filename: "chat.html"}))

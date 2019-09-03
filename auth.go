@@ -1,14 +1,28 @@
 package main
 
 import (
-	"fmt"
-	"io"
-	"github.com/stretchr/gomniauth"
-	"github.com/stretchr/objx"
 	"crypto/md5"
+	"fmt"
+	"github.com/stretchr/gomniauth"
+	gomniauthcommon "github.com/stretchr/gomniauth/common"
+	"github.com/stretchr/objx"
+	"io"
 	"net/http"
 	"strings"
 )
+
+type ChatUser interface {
+	UniqueID() string
+	AvatarURL() string
+}
+type chatUser struct {
+	gomniauthcommon.User //this is interface, which means that our struct interface implements the interface automatically.
+	uniqueID             string
+}
+
+func (u chatUser) UniqueID() string {
+	return u.uniqueID
+}
 
 type authHandler struct {
 	next http.Handler
@@ -68,10 +82,10 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(m, strings.ToLower(user.Email()))
 		userId := fmt.Sprintf("%x", m.Sum(nil))
 		authCookieValue := objx.New(map[string]interface{}{
-			"userid": userId,
+			"userid":     userId,
 			"name":       user.Name(),
 			"avatar_url": user.AvatarURL(),
-			"email": user.Email(),
+			"email":      user.Email(),
 		}).MustBase64()
 		http.SetCookie(w, &http.Cookie{
 			Name:  "auth",

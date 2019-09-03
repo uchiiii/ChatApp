@@ -2,6 +2,8 @@ package main
 
 import (
 	"errors"
+	"io/ioutil"
+	"path"
 )
 
 //ErrNoAvatar is the error that return ed when the Avatar instance is unable to provide an avatar URL.
@@ -17,24 +19,36 @@ type AuthAvatar struct{}
 
 var UseAuthAvatar AuthAvatar
 
-func (AuthAvatar) GetAvatarURL(c *client) (string, error) { //objectなしでもOK
-	if url, ok := c.userData["avatar_url"]; ok {
-		if urlStr, ok := url.(string); ok {
-			return urlStr, nil
+func (AuthAvatar) GetAvatarURL(u ChatUser) (string, error) { //objectなしでもOK
+	url := u.AvatarURL()
+	if len(url) == 0 {
+		return "", ErrNoAvatarURL
+	}
+	return  url, nil
+}
+
+type FileSystemAvatar struct{}
+
+var UserFileSystemAvatar FileSystemAvatar
+
+func (FileSystemAvatar) GetAvatarURL(u chatUser) (string, error) {
+	if files, err := ioutil.ReadDir("avatars"); err == nil {
+		for _, file := range files {
+			if file.IsDir() {
+				continue
+			}
+			if match, _ := path.Match(u.UniqueID()+"*", file.Name()); match {
+				return "/avatars/" + file.Name(), nil
+			}
 		}
 	}
 	return "", ErrNoAvatarURL
 }
 
-type GravatarAvatar struct {}
+type GravatarAvatar struct{}
 
 var UseGravatar GravatarAvatar
 
-func (GravatarAvatar) GetAvatarURL(c *client) (string, error) {
-	if userid, ok := c.userData["userid"]; ok {
-		if useridStr, ok := userid.(string); ok {
-			return "//www.gravatar.com/avatar/" + useridStr, nil
-		}
-	}
-	return "", ErrNoAvatarURL
+func (GravatarAvatar) GetAvatarURL(u chatUser) (string, error) {
+	return "//www.gravatar.com/avatar/" + u.UniqueID(), nil
 }
