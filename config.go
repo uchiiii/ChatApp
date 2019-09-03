@@ -6,12 +6,11 @@ type Config struct {
 
 type AuthConfig struct {
 	SecurityKey string
-	Each map[string]Each
+	Each        map[string]Each
 }
 
 type Each struct {
-	Id string 
-	Secret string
+	Id          string
+	Secret      string
 	RedirectURL string
 }
-

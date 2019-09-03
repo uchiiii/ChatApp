@@ -11,11 +11,11 @@ import (
 	"sync"
 	"text/template"
 	//"github.com/stretchr/gomniauth/provider/facebook"
-	"github.com/stretchr/objx"
-	"github.com/stretchr/gomniauth"
-	"github.com/stretchr/gomniauth/providers/google"
-	"github.com/stretchr/gomniauth/providers/github"
 	"github.com/BurntSushi/toml"
+	"github.com/stretchr/gomniauth"
+	"github.com/stretchr/gomniauth/providers/github"
+	"github.com/stretchr/gomniauth/providers/google"
+	"github.com/stretchr/objx"
 )
 
 type templateHandler struct {
@@ -31,7 +31,7 @@ func (t *templateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"Host": r.Host,
 	}
-	if authCookie, err := r.Cookie("auth"); err == nil{
+	if authCookie, err := r.Cookie("auth"); err == nil {
 		data["UserData"] = objx.MustFromBase64(authCookie.Value)
 	}
 	t.templ.Execute(w, data)
@@ -54,7 +54,7 @@ func main() {
 		github.New(config.Auth.Each["github"].Id, config.Auth.Each["github"].Secret, config.Auth.Each["github"].RedirectURL),
 	)
 
-	r := newRoom()
+	r := newRoom(UseGravatar) //did not have to create an instance of AuthAvatar, so no memory was allocated.
 	r.tracer = trace.New(os.Stdout)
 
 	http.Handle("/chat", MustAuth(&templateHandler{filename: "chat.html"}))
@@ -63,14 +63,17 @@ func main() {
 	http.Handle("/room", r)
 	http.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
 		http.SetCookie(w, &http.Cookie{
-			Name: "auth",
-			Value: "",
-			Path: "/",
+			Name:   "auth",
+			Value:  "",
+			Path:   "/",
 			MaxAge: -1,
 		})
 		w.Header().Set("Location", "/chat")
 		w.WriteHeader(http.StatusTemporaryRedirect)
 	})
+	http.Handle("/upload", &templateHandler{filename: "upload.html"})
+	http.HandleFunc("/uploader", uploaderHandler)
+	http.Handle("/avatars/", http.StripPrefix("/avatars/", http.FileServer(http.Dir("./avatars"))))
 
 	go r.run()
 

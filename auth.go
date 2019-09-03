@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"github.com/stretchr/gomniauth"
 	"github.com/stretchr/objx"
+	"crypto/md5"
 	"net/http"
 	"strings"
 )
@@ -14,7 +16,7 @@ type authHandler struct {
 
 func (h *authHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("auth")
-	if err == http.ErrNoCookie ||  cookie.Value == "" {
+	if err == http.ErrNoCookie || cookie.Value == "" {
 		w.Header().Set("Location", "/login")
 		w.WriteHeader(http.StatusTemporaryRedirect)
 		return
@@ -62,14 +64,19 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf("Error when trying to get user from %s: %s", provider, err), http.StatusInternalServerError)
 			return
 		}
+		m := md5.New()
+		io.WriteString(m, strings.ToLower(user.Email()))
+		userId := fmt.Sprintf("%x", m.Sum(nil))
 		authCookieValue := objx.New(map[string]interface{}{
-			"name": user.Name(),
+			"userid": userId,
+			"name":       user.Name(),
 			"avatar_url": user.AvatarURL(),
+			"email": user.Email(),
 		}).MustBase64()
 		http.SetCookie(w, &http.Cookie{
 			Name:  "auth",
 			Value: authCookieValue,
-			Path:  "/",  //designate the domain which can use the cookie
+			Path:  "/", //designate the domain which can use the cookie
 		})
 		w.Header().Set("Location", "/chat")
 		w.WriteHeader(http.StatusTemporaryRedirect)
